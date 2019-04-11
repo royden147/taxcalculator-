@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<!------ Include the above in your HEAD tag ---------->
+
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+	crossorigin="anonymous">
+	
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+	crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+	crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+	crossorigin="anonymous"></script>
+<title>Tax Calculator</title>
+</head>
+<body>
+<style>
+.format-number{
+	text-align:right;	
+	}
+.form-error{
+	color:red;
+	display:block;
+}
+body {
+		background-color: #eeeeee;
+	}
+
+.h7 {
+	font-size: 0.8rem;
+}
+
+.gedf-wrapper {
+	margin-top: 0.97rem;
+}
+
+@media (min-width: 992px) {
+	.gedf-main {
+		padding-left: 4rem;
+		padding-right: 4rem;
+	}
+	.gedf-card {
+		margin-bottom: 2.77rem;
+	}
+}
+
+td{
+	padding: 8px;
+}
+
+.tableheading{
+	background-color:#ccc;
+}
+
+
+/**Reset Bootstrap*/
+.dropdown-toggle::after {
+	content: none;
+	display: none;
+}
+</style>
+<script>
+//deductions
+var EXPENSES_OF_SELF_EDUCATION = 100000;
+var HOME_LOAN_INTEREST = 100000;
+var MANDATORY_CONTRIBUTION_TO_RECOGNIZED_RETIREMENT_SCHEMES = 18000;
+var ELDERLY_RESIDENTIAL_CARE_EXPENSES = 100000;
+var APPROVED_CHARITABLE_DONATIONS_PERCENTAGE = 35;
+
+//allowances
+var BASIC_ALLOWANCE = 132000;
+var MARRIED_PERSON_ALLOWANCE = 264000;
+var CHILD_ALLOWANCE = 120000;
+var CHILD_ALLOWANCE_DURING_YEAR = 120000;
+var DEPENDENT_BROTHER_SISTER = 37500;
+var DEPENDENT_PARENT_GRANDPARENT_ABOVE_SIXTY = 50000;
+var DEPENDENT_PARENT_GRANDPARENT_BELOW_SIXTY = 25000;
+var SINGLE_PARENT_ALLOWANCE = 132000;
+var PERSONAL_DISABILITY_ALLOWANCE = 75000;
+var DISABLED_DEPENDENT_ALLOWANCE = 75000;
+
+
+</script>
+	
+<nav class="navbar navbar-light bg-white">
+	<a href="#" class="navbar-brand">Tax Assessment</a>
+	<!--<form class="form-inline">
+		<div class="input-group">
+			<input type="text" class="form-control" aria-label="Recipient's username" aria-describedby="button-addon2">
+			<div class="input-group-append">
+				<button class="btn btn-outline-primary" type="button" id="button-addon2">
+					<i class="fa fa-search"></i>
+				</button>
+			</div>
+		</div>
+	</form>-->
+</nav>
+
+
+<div class="container-fluid gedf-wrapper">
+	<form method = "post" name  = "tax_calculator_frm">
+	<div class="row">
+		<div class="col-md-12 ">
+			<div class="card ">
+				<div class="card-body">
+					<h4>Tax Assessment</h4>
+					<a href = "#" id = "show-slab">Show Tax Rate Slab</a>
+					<div id = "tax-rate-slab" style = "display:none;">
+							<table width="100%" border="1">
+							<tbody>
+								<tr>
+									<th>Net Chargeable Income (in HKD currency)</th>
+									<th>Rate</th>
+								</tr>
+								<tr>
+									<td>0 - 40,000 HKD</td>
+									<td>2%</td>
+								</tr>
+								<tr>
+									<td>40,001 - 80,000 HKD</td>
+									<td>7%</td>
+								</tr>
+								<tr>
+									<td>80,001 - 120,000 HKD</td>
+									<td>12%</td>
+								</tr>
+								<tr>
+									<td>Above 120,001 HKD</td>
+									<td>17%</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<table width="100%" border="1">
+						<tbody>
+							<tr>
+								<td class="tableheading">Salaries tax computation</td>
+								<td class="tableheading" style="text-align: right;width:25%;">HKD</td>
+								<td class="tableheading" style="text-align: right;">HKD</td>
+							</tr>
+							<tr>
+								<td>Salaries</td>
+								<td ><input type = "text" class = "form-control format-number total-income" id = "basic-salary"   data-validation="number"	 
+		  data-validation-ignore="," name = "basic_salary" value = "0" /></td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Bonus</td>
+								<td ><input type = "text" class = "form-control format-number total-income" id = "bonus" data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," data-validation-ignore=","  name = "bonus"  value = "0" data-validation-optional="true"  /></td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td><strong>Total assessable income</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;"><span id = "total-income" class = "format-number"></span></td>
+							</tr>
+							<tr>
+								<td><strong>Less: Concessionary deductions</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Charitable donations</td>
+								<td><input type = "text" class = "form-control format-number  total-deductions" id = "charity-donation"   data-validation="number" data-validation-allowing="float"  data-validation-decimal-separator="," data-validation-ignore="," data-validation-optional="true" name = "charity_donation" value = "0"  /></td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Retirement scheme contributions</td>
+								<td ><input type = "text" class = "form-control format-number  total-deductions" id = "retirement-scheme"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "retirement_scheme" data-validation-ignore="," value = "0"  /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Self Education Expenses</td>
+								<td ><input type = "text" class = "form-control format-number  total-deductions" id = "self-education"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "self_education" value = "0"  data-validation-ignore="," data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Home Loan Interest</td>
+								<td ><input type = "text" class = "form-control format-number  total-deductions" id = "home-loan"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "home_loan" value = "0" data-validation-ignore=","  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Elderly Residential Care Expenses <br /> No. of dependant(s) resided in residential care home <select name = "no_of_elderly" id = "no-of-elderly" ><option value = "0" selected>0</option><option value = "1">1</option><option value = "2">2</option><option value = "3">3</option><option value = "4">4</option></select></td>
+								<td ><input type = "text" class = "form-control format-number  total-deductions" id = "elderly-amount"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," data-validation-optional="true" data-validation-ignore="," name = "elderly_amount" value = "0" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+
+
+							<tr>
+								<td><strong>Total Deductions</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;" ><span id = "total-deductions" class = "format-number"></span></td>
+							</tr>
+
+							<tr>
+								<td><strong>Net income</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;"><span id = "net-income" class = "format-number"></span></td>
+							</tr>
+							<tr>
+								<td><strong>Less: Allowances</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Married &nbsp;&nbsp;<select name = "married" id = "married" ><option value = "yes" >Yes</option><option value = "no" selected >No</option></select></td>
+								<td ><input type = "text" class = "form-control format-number total-allowances" id = "basic-allowance"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "basic_allowance" data-validation-ignore="," value = "0" /></td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Child allowances <span style = "font-size:12px">(born in the year)</span>
+								<br />No. of Dependent Child &nbsp;&nbsp;
+								<select name = "in_year_born" id = "in_year_born" >
+									<option value = "0" selected>0</option>
+									<option value = "1" >1</option>
+									<option value = "2" >2</option>
+									<option value = "3" >3</option>
+									<option value = "4" >4</option>
+									<option value = "5" >5</option>
+									<option value = "6" >6</option>
+									<option value = "7" >7</option>
+									<option value = "8" >8</option>
+									<option value = "9" >9</option>
+								</select>
+								</td>
+								<td style="text-align: right;"><input type = "text" class = "form-control format-number total-allowances" id = "child-allowance-in-year"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "child_allowance_in_year" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Child allowances <span style = "font-size:12px">(born in other year)</span>
+								<br />No. of Dependent Child &nbsp;&nbsp;
+								<select name = "other_year_born" id = "other_year_born" >
+									<option value = "0" selected>0</option>
+									<option value = "1" >1</option>
+									<option value = "2" >2</option>
+									<option value = "3" >3</option>
+									<option value = "4" >4</option>
+									<option value = "5" >5</option>
+									<option value = "6" >6</option>
+									<option value = "7" >7</option>
+									<option value = "8" >8</option>
+									<option value = "9" >9</option>
+								</select>
+								</td>
+								<td style="text-align: right;"><input type = "text" class = "form-control format-number total-allowances" id = "child-allowance-other-year"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "child_allowance_other_year" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Dependent Brothers / Sisters Allowance 
+								<br />No. of Dependent Brothers / Sisters&nbsp;&nbsp;
+								<select name = "no_of_brosis" id = "no-of-brosis" >
+									<option value = "0" selected>0</option>
+									<option value = "1" >1</option>
+									<option value = "2" >2</option>
+									<option value = "3" >3</option>
+									<option value = "4" >4</option>
+									<option value = "5" >5</option>
+									<option value = "6" >6</option>
+									<option value = "7" >7</option>
+									<option value = "8" >8</option>
+									<option value = "9" >9</option>
+								</select>
+								</td>
+								<td style="text-align: right;"><input type = "text" class = "form-control format-number total-allowances" id = "brosis-allowance"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "brosis_allowance" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+
+							<tr>
+								<td>Dependent Parent/Grandparent Allowance 
+								<br />No. of Parent/Grandparent aged 60 or above&nbsp;&nbsp;
+								<select name = "no_of_grandparent_sixty" id = "no-of-grandparent-sixty" >
+									<option value = "0" selected>0</option>
+									<option value = "1" >1</option>
+									<option value = "2" >2</option>
+									<option value = "3" >3</option>
+									<option value = "4" >4</option>
+								</select>
+								</td>
+								<td style="text-align: right;"><input type = "text" class = "form-control format-number total-allowances" id = "grandparent-allowance-sixty"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "grandparent_allowance_sixty" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+							<tr>
+								<td>Dependent Parent/Grandparent Allowance 
+								<br />No. of Parent/Grandparent aged 55 or above but below 60&nbsp;&nbsp;
+								<select name = "no_of_grandparent_fivty" id = "no-of-grandparent-fivty" >
+									<option value = "0" selected>0</option>
+									<option value = "1" >1</option>
+									<option value = "2" >2</option>
+									<option value = "3" >3</option>
+									<option value = "4" >4</option>
+								</select>
+								</td>
+								<td style="text-align: right;"><input type = "text" class = "form-control format-number total-allowances" id = "grandparent-allowance-fivty"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "grandparent_allowance_fivty" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+
+							<tr>
+								<td>Personal Disability Allowance &nbsp;&nbsp;
+								<select name = "persoanl_disability" id = "persoanl-disability" >
+									<option value = "no" selected>No</option>
+									<option value = "yes" >Yes</option>
+								</select></td>
+								<td ><input type = "text" class = "form-control format-number total-allowances" id = "personal-disability-allowance"   data-validation="number" data-validation-allowing="float" 
+		 data-validation-decimal-separator="," name = "personal_disability_allowance" data-validation-ignore="," value = "0"  data-validation-optional="true" /></td>
+								<td style="text-align: right;"></td>
+							</tr>
+
+							<tr>
+								<td><strong>Total Allowances</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;"><span id = "total-allowances" class = "format-number" ></span></td>
+							</tr>
+
+							<tr>
+								<td><strong>Net chargeable income</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;"><span id = "net-chargeble-income" class = "format-number"></span></td>
+							</tr>
+							<!--<tr>
+								<td><strong>Tax at progressive rates:</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>First HKD 50,000 @ 2%</td>
+								<td style="text-align: right;">1,000</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Next HKD 50,000 @ 6%</td>
+								<td style="text-align: right;">3,000</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td>Remainder HKD 25,000 @ 10%</td>
+								<td style="text-align: right;">2,500</td>
+								<td style="text-align: right;">&nbsp;</td>
+							</tr>
+							<tr>
+								<td><strong>Tax payable (1)</strong></td>
+								<td style="text-align: right;">&nbsp;</td>
+								<td style="text-align: right;"><u>6,500</u></td>
+							</tr>-->
+						</tbody>
+					</table>
+					<br />
+					<div style = "text-align:right;" ><button type = "button" id = "compute-tax">Compute Tax</button></div>
+					<div id = "result"><strong>RESULT</strong></div>
+				</div>
+			</div>
+			<!-- Post /////-->
+		</div>
+	</div>
+	</form>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
+
+
+<script>
+$(document).ready(function(){
+
+	$('#show-slab').on('click',function(){
+		$('#tax-rate-slab').toggle('slow',function(){});
+	});
+
+	$('#basic-allowance').val(BASIC_ALLOWANCE);
+	$('#married').on('change', function (e) {
+		//var optionSelected = $("option:selected", this);
+		var valueSelected = $(this).val();
+		if(valueSelected == 'yes'){
+			$('#basic-allowance').val(MARRIED_PERSON_ALLOWANCE);
+			updateTotalAllowances();
+		}
+		else{
+			$('#basic-allowance').val(BASIC_ALLOWANCE);
+			updateTotalAllowances();
+		}
+	});
+	//START : personal disablity allowance
+	//$('#personal-disability-allowance').val(0);
+	$('#persoanl-disability').on('change', function (e) {
+		//var optionSelected = $("option:selected", this);
+		var valueSelected = $(this).val();
+		if(valueSelected == 'yes'){
+			$('#personal-disability-allowance').val(PERSONAL_DISABILITY_ALLOWANCE);
+			updateTotalAllowances();
+		}else{
+			$('#personal-disability-allowance').val(0);
+			updateTotalAllowances();
+		}
+
+	});
+	//END : personal disablity allowance
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+}); //on ready
+
+$.validate({
+	validateOnBlur: true,
+	showHelpOnFocus: false,
+	addSuggestions: false,
+	borderColorOnError: '',
+	inputParentClassOnSuccess: false
+});
+
+$('.total-income').change(function(){
+	//console.log(qty);
+	/*if(!$.isNumeric(qty)){
+		$('#qty_'+prod_id).val(0)
+	}*/
+	updateTotalIncome();
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+$('.total-deductions').change(function(){
+	//console.log(qty);
+	/*if(!$.isNumeric(qty)){
+		$('#qty_'+prod_id).val(0)
+	}*/
+	updateTotalDeductions();
+});
+
+$('.total-allowances').on('change', function(){
+	updateTotalAllowances();
+
+});
+
+
+
+$('#charity-donation').blur(function(){
+	var charity_donation = parseInt($.trim($(this).val().toString().replace(/,/g, '')));
+	var total_income = parseInt($('#total-income').html().toString().replace(/,/g, '')); 
+	var max_charity_donation =   Math.floor(total_income * (APPROVED_CHARITABLE_DONATIONS_PERCENTAGE/100));
+	//alert( 'MAX ' + max_charity_donation);
+	//alert( 'TTAL INCOe ' + total_income);
+	if(charity_donation > max_charity_donation){
+		alert('Max. Charity donation should not be greater than 35% of total income');
+		$(this).val(max_charity_donation);
+	}
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+$('#retirement-scheme').blur(function(){
+	var vl = parseInt($.trim($(this).val().toString().replace(/,/g, '')));
+	if(vl > MANDATORY_CONTRIBUTION_TO_RECOGNIZED_RETIREMENT_SCHEMES){
+		alert('Max. contribution to recognized retirement schemes should not be greater than 18000');
+		$(this).val(MANDATORY_CONTRIBUTION_TO_RECOGNIZED_RETIREMENT_SCHEMES);
+	}
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+
+$('#self-education').blur(function(){
+	var vl = parseInt($.trim($(this).val().toString().replace(/,/g, '')));
+	if(vl > EXPENSES_OF_SELF_EDUCATION){
+		alert('Max. expenses of Self Education should not be greater than 10000');
+		$(this).val(EXPENSES_OF_SELF_EDUCATION);
+	}
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+
+$('#home-loan').blur(function(){
+	var vl = parseInt($.trim($(this).val().toString().replace(/,/g, '')));
+	if(vl > HOME_LOAN_INTEREST){
+		alert('The deductible Home Loan Interest cannot exceed HK$100,000');
+		$(this).val(HOME_LOAN_INTEREST);
+	}
+		updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+
+
+$('#no-of-elderly').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateElderlyAmount();
+});
+
+
+$('#elderly-amount').blur(function(){
+	updateElderlyAmount();
+	updateTotalDeductions();
+	updateTotalAllowances();
+});
+
+
+
+
+
+function updateElderlyAmount(){
+	var vl = parseInt($.trim($('#elderly-amount').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#no-of-elderly').val();
+	if(no_elderly == 0){
+		$('#elderly-amount').val(0);
+	}else{
+		var max_elderly = ELDERLY_RESIDENTIAL_CARE_EXPENSES * no_elderly;
+		if(vl > max_elderly){
+			alert('Elderly Residential Care Expenses should not exceed ' + max_elderly);
+			$('#elderly-amount').val(parseInt(max_elderly));
+			//$('#elderly-amount').blur();
+		}
+	}
+}
+
+//dependent child in a year
+$('#in_year_born').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateDependentChildInYear();
+});
+
+
+$('#child-allowance-in-year').blur(function(){
+	updateDependentChildInYear();
+
+});
+
+function updateDependentChildInYear(){
+	var vl = parseInt($.trim($('#child-allowance-in-year').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#no-of-elderly').val();
+	if(no_elderly == 0){
+		$('#child-allowance-in-year').val(0);
+	}else{
+		var max_elderly = (CHILD_ALLOWANCE + CHILD_ALLOWANCE_DURING_YEAR ) * no_elderly;
+		if(vl > max_elderly){
+			alert('Dependent Child Allowance during the year is not exceed than ' + max_elderly);
+			$('#child-allowance-in-year').val(parseInt(max_elderly));
+		}
+	}
+}
+//end dependent child in a year
+
+
+//dependent child other year
+$('#other_year_born').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateDependentChildOtherYear();
+});
+
+
+$('#child-allowance-other-year').blur(function(){
+	updateDependentChildOtherYear();
+	updateTotalDeductions();
+	updateTotalAllowances();
+
+});
+
+function updateDependentChildOtherYear(){
+	var vl = parseInt($.trim($('#child-allowance-other-year').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#other_year_born').val();
+	if(no_elderly == 0){
+		$('#child-allowance-other-year').val(0);
+	}else{
+		var max_elderly = CHILD_ALLOWANCE * no_elderly;
+		if(vl > max_elderly){
+			alert('Dependent Child Allowance in other year is not exceed than ' + max_elderly);
+			$('#child-allowance-other-year').val(parseInt(max_elderly));
+		}
+	}
+}
+//end dependent child other year
+
+
+//parent / grand parent child above 60
+$('#no-of-grandparent-sixty').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateParentAboutSixty();
+});
+
+
+$('#grandparent-allowance-sixty').blur(function(){
+	updateParentAboutSixty();
+});
+
+function updateParentAboutSixty(){
+	var vl = parseInt($.trim($('#grandparent-allowance-sixty').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#no-of-grandparent-sixty').val();
+	if(no_elderly == 0){
+		$('#grandparent-allowance-sixty').val(0);
+	}else{
+		var max_elderly = DEPENDENT_PARENT_GRANDPARENT_ABOVE_SIXTY * no_elderly;
+		if(vl > max_elderly){
+			alert('Dependent Parent/Grandparent Allowance Above 60 is not exceed than ' + max_elderly);
+			$('#grandparent-allowance-sixty').val(parseInt(max_elderly));
+		}
+	}
+}
+//parent / grand parent child above 60
+
+
+//parent / grand parent child below 60
+$('#no-of-grandparent-fivty').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateParentBelowSixty();
+});
+
+
+$('#grandparent-allowance-fivty').blur(function(){
+	updateParentBelowSixty();
+});
+
+function updateParentBelowSixty(){
+	var vl = parseInt($.trim($('#grandparent-allowance-fivty').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#no-of-grandparent-fivty').val();
+	if(no_elderly == 0){
+		$('#grandparent-allowance-fivty').val(0);
+	}else{
+		var max_elderly = DEPENDENT_PARENT_GRANDPARENT_BELOW_SIXTY * no_elderly;
+		if(vl > max_elderly){
+			alert('Dependent Parent/Grandparent Allowance Below 60 is not exceed than ' + max_elderly);
+			$('#grandparent-allowance-fivty').val(parseInt(max_elderly));
+		}
+	}
+}
+//parent / grand parent child below 60
+
+
+//START : no of brother sisiters
+$('#no-of-brosis').on('change', function (e) {
+	//var optionSelected = $("option:selected", this);
+	//var valueSelected = this.value;
+	updateBrotherSisterAllowance();
+});
+
+
+$('#brosis-allowance').blur(function(){
+	updateBrotherSisterAllowance();
+});
+
+function updateBrotherSisterAllowance(){
+	var vl = parseInt($.trim($('#brosis-allowance').val().toString().replace(/,/g, '')));
+	var no_elderly = $('#no-of-brosis').val();
+	if(no_elderly == 0){
+		$('#brosis-allowance').val(0);
+	}else{
+		var max_elderly = DEPENDENT_BROTHER_SISTER * no_elderly;
+		if(vl > max_elderly){
+			alert('Dependent Brothers/Sisters Allowance should not exceed than ' + max_elderly);
+			$('#brosis-allowance').val(parseInt(max_elderly));
+		}
+	}
+}
+//END : no of brother sisiters
+
+
+function updateTotalIncome(){
+	if(!$.isNumeric($.trim($('#basic-salary').val())))$('#basic-salary').val(0);
+	if(!$.isNumeric($.trim($('#bonus').val())))$('#bonus').val(0);
+
+	var basic_salary = $.trim($('#basic-salary').val().toString().replace(/,/g, ''));
+	var bonus = $.trim($('#bonus').val().toString().replace(/,/g, ''));
+	var total_income = 0;
+	total_income = parseInt(basic_salary) + parseInt(bonus);
+	$('#total-income').html(total_income) ;
+}
+
+
+function updateTotalDeductions(){
+	if(!$.isNumeric($.trim($('#charity-donation').val())))$('#charity-donation').val(0);
+	if(!$.isNumeric($.trim($('#retirement-scheme').val())))$('#retirement-scheme').val(0);
+	if(!$.isNumeric($.trim($('#self-education').val())))$('#self-education').val(0);
+	if(!$.isNumeric($.trim($('#home-loan').val())))$('#home-loan').val(0);
+	if(!$.isNumeric($.trim($('#elderly-amount').val())))$('#elderly-amount').val(0);
+
+	var no_elderly = $('#no-of-elderly').val();
+	if(no_elderly == 0){
+		$('#elderly-amount').val(0);
+	}
+
+	var charity_donation = $.trim($('#charity-donation').val().toString().replace(/,/g, ''));
+	var retirement_scheme = $.trim($('#retirement-scheme').val().toString().replace(/,/g, ''));
+	var self_education = $.trim($('#self-education').val().toString().replace(/,/g, ''));
+	var home_loan = $.trim($('#home-loan').val().toString().replace(/,/g, ''));
+	var elderly_amount = $.trim($('#elderly-amount').val().toString().replace(/,/g, ''));
+
+
+	var total_deductions = 0;
+	total_deductions = parseInt(charity_donation) + parseInt(retirement_scheme) + parseInt(self_education) + parseInt(home_loan) + parseInt(elderly_amount);
+
+	$('#total-deductions').html(total_deductions) ;
+
+	//calculate net income : total_income - total_deductions
+	var net_income = parseInt($('#total-income').html()) -  parseInt($('#total-deductions').html());
+	console.log(net_income);
+	if(net_income <= 0)
+	$('#net-income').html(0);
+	else
+	$('#net-income').html(net_income);
+
+}
+
+function updateTotalAllowances(){
+	console.log('update total allowance calliing');
+	if(!$.isNumeric($.trim($('#basic-allowance').val())))$('#basic-allowance').val(0);
+	if(!$.isNumeric($.trim($('#child-allowance-in-year').val())))$('#child-allowance-in-year').val(0);
+	if(!$.isNumeric($.trim($('#child-allowance-other-year').val())))$('#child-allowance-other-year').val(0);
+	if(!$.isNumeric($.trim($('#brosis-allowance').val())))$('#brosis-allowance').val(0);
+	if(!$.isNumeric($.trim($('#grandparent-allowance-sixty').val())))$('#grandparent-allowance-sixty').val(0);
+	if(!$.isNumeric($.trim($('#grandparent-allowance-fivty').val())))$('#grandparent-allowance-fivty').val(0);
+	if(!$.isNumeric($.trim($('#personal-disability-allowance').val())))$('#personal-disability-allowance').val(0);
+
+	var no_elderly = $('#in_year_born').val();
+	if(no_elderly == 0){
+		$('#child-allowance-in-year').val(0);
+	}
+	var no_elderly = $('#other_year_born').val();
+	if(no_elderly == 0){
+		$('#child-allowance-other-year').val(0);
+	}
+	var no_elderly = $('#no-of-brosis').val();
+	if(no_elderly == 0){
+		$('#brosis-allowance').val(0);
+	}
+	var no_elderly = $('#no-of-grandparent-sixty').val();
+	if(no_elderly == 0){
+		$('#grandparent-allowance-sixty').val(0);
+	}
+	var no_elderly = $('#no-of-grandparent-fivty').val();
+	if(no_elderly == 0){
+		$('#grandparent-allowance-fivty').val(0);
+	}
+	var no_elderly = $('#persoanl-disability').val();
+	if(no_elderly == 0){
+		$('#personal-disability-allowance').val(0);
+	}
+
+
+
+	var basic_allowance = $.trim($('#basic-allowance').val().toString().replace(/,/g, ''));
+	var child_allowance_in_year = $.trim($('#child-allowance-in-year').val().toString().replace(/,/g, ''));
+	var child_allowance_other_year = $.trim($('#child-allowance-other-year').val().toString().replace(/,/g, ''));
+	var brosis_allowance = $.trim($('#brosis-allowance').val().toString().replace(/,/g, ''));
+	var grandparent_allowance_sixty = $.trim($('#grandparent-allowance-sixty').val().toString().replace(/,/g, ''));
+	var grandparent_allowance_fivty = $.trim($('#grandparent-allowance-fivty').val().toString().replace(/,/g, ''));
+	var personal_disability_allowance = $.trim($('#personal-disability-allowance').val().toString().replace(/,/g, ''));
+
+
+	var total_allowances = 0;
+	total_allowances = parseInt(basic_allowance) + parseInt(child_allowance_in_year) + parseInt(child_allowance_other_year) + parseInt(brosis_allowance) + parseInt(grandparent_allowance_sixty)  + parseInt(grandparent_allowance_fivty) + parseInt(personal_disability_allowance) ;
+
+	$('#total-allowances').html(total_allowances) ;
+
+	//calculate net income : total_income - total_deductions
+	var net_chargeable_income = parseInt($('#net-income').html()) -  parseInt($('#total-allowances').html());
+	console.log(net_chargeable_income);
+	if(net_chargeable_income <= 0)
+	$('#net-chargeble-income').html(0);
+	else
+	$('#net-chargeble-income').html(net_chargeable_income);
+
+}
+
+
+$('.format-number').blur(function(){
+   /* $(this).val($(this).val().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+	//alert("This input field has lost its focus.");
+	var s  = $(this).val().toString().replace(/,/g, '');
+	s = s - 10;
+	console.log(s);
+	*/
+});
+
+$('#compute-tax').on('click',function(){
+	var net_charge_income = $.trim($('#net-chargeble-income').html().toString().replace(/,/g, ''));
+	var net_income = $.trim($('#net-income').html().toString().replace(/,/g, ''));
+	var standard_rate_tax = Math.floor((net_income *15)/100);
+	var tax = 0;
+	var tax1 = 0;
+	var tax2 = 0;
+	var tax3 = 0;
+
+	var loop = 1;
+	while(net_charge_income > 0){
+		if(loop == 1){
+			if(net_charge_income >= 40000){
+				net_charge_income = net_charge_income - 40000;
+				tax = tax + Math.floor((40000*2)/100);
+			}else{
+				tax = tax + Math.floor((net_charge_income*2)/100);
+				net_charge_income = net_charge_income - 40000;
+			}
+		}
+		else if(loop == 2){
+			if(net_charge_income >= 40000){
+				net_charge_income = net_charge_income - 40000;
+				tax = tax + Math.floor((40000*7)/100);
+			}else{
+				tax = tax + Math.floor((net_charge_income*7)/100);
+				net_charge_income = net_charge_income - 40000;
+			}
+		}else if(loop == 3){
+			if(net_charge_income >= 40000){
+				net_charge_income = net_charge_income - 40000;
+				tax = tax + Math.floor((40000*7)/100);
+			}else{
+				tax = tax + Math.floor((net_charge_income*12)/100);
+				net_charge_income = net_charge_income - 40000;
+			}
+		}else if(loop == 4){
+			tax = tax + Math.floor((net_charge_income*17)/100);
+			net_charge_income = 0;
+		}
+		loop += 1;
+	}//while
+	console.log('STANDARD TAX : ' + standard_rate_tax +  "\n" + 'Progressive TAX : ' + tax);
+	if(standard_rate_tax < tax )
+	$('#result').html('<strong>Total Tax Payable : ' +  standard_rate_tax   + ' HKD </strong>');
+	else
+	$('#result').html('<strong>Total Tax Payable : ' +  tax   + ' HKD </strong>');
+});
+
+	/*$("#client_id").on("change", function(){
+		$.ajax({
+			type: "post",
+			//dataType: "json",
+			url: "index.php",
+			cache: false,
+			data: {action : 'ajax_get_delivery_option', client_id : $(this).val()},
+			beforeSend: function(){
+			},
+			success: function(response){
+				console.log(response);
+				$('#delivery_option').val(response);
+			},
+			error: function(xhr) { // if error occured
+				console.log('Error : ' + xhr.statusText);
+				//alert('Error : ' + xhr.statusText )
+			},
+			complete: function(response){
+			}
+		});
+	 });
+	*/
+//var newStr = myStr.replace(/,/g, '-');
+
+
+</script>
+</body>
+</html>
